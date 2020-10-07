@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -12,16 +13,26 @@
 #define ERASE_LINE "\x1b[2K"
 
 struct termios old_termios;
+size_t max_size;
 const char* prompt;
 char* value = NULL;
+
+void catch_signal(int signum) {
+    exit(EXIT_FAILURE);
+}
 
 void finally(void) {
     tcsetattr(STDIN_FILENO, TCSANOW, &old_termios);
     fprintf(stderr, "\nDone\n");
 }
 
-void handle_signal(int signum) {
-    exit(EXIT_FAILURE);
+void init(void) {
+    assert((value = malloc(max_size)));
+    struct termios new_termios = old_termios;
+    new_termios.c_lflag &= ~(ECHO | ICANON);
+    tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
+    atexit(finally);
+    signal(SIGINT, catch_signal);
 }
 
 void write_prompt(void) {
@@ -32,13 +43,12 @@ void write_prompt(void) {
 }
 
 int main(int argc, char** argv) {
-    prompt = argc > 1 ? argv[1] : "";
     tcgetattr(STDIN_FILENO, &old_termios);
-    struct termios new_termios = old_termios;
-    new_termios.c_lflag &= ~(ECHO | ICANON);
-    tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
-    atexit(finally);
-    signal(SIGINT, handle_signal);
+    signal(SIGABRT, catch_signal);
+    assert(argc > 1);
+    max_size = atoi(argv[1]);
+    prompt = argc > 2 ? argv[2] : "";
+    init();
     write_prompt();
     int c;
     while (true) {
