@@ -30,8 +30,8 @@ void init(void) {
     assert((value = malloc(max_size)));
     struct termios new_termios = old_termios;
     new_termios.c_lflag &= ~(ECHO | ICANON);
-    tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
-    atexit(finally);
+    assert(!tcsetattr(STDIN_FILENO, TCSANOW, &new_termios));
+    assert(!atexit(finally));
     signal(SIGINT, catch_signal);
 }
 
@@ -43,7 +43,7 @@ void write_prompt(void) {
 }
 
 int main(int argc, char** argv) {
-    tcgetattr(STDIN_FILENO, &old_termios);
+    assert(!tcgetattr(STDIN_FILENO, &old_termios));
     signal(SIGABRT, catch_signal);
     assert(argc > 1);
     max_size = atoi(argv[1]);
