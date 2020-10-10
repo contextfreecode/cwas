@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Text;
+using System.Threading;
+
+class CancelException: Exception {}
 
 class Field {
     public string Label { init; get; }
@@ -8,26 +11,37 @@ class Field {
 
     StringBuilder value = new();
 
+    protected virtual bool KeepChar(char c) {
+        return true;
+    }
+
+    void Cancel() {
+        value.Clear();
+        Draw();
+        Write(ConsoleColor.Red, "-");
+    }
+
     void Draw() {
         Console.Write($"\r{new string(' ', Console.WindowWidth)}\r");
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.Write($"{Label}: ");
-        Console.ResetColor();
+        Write(ConsoleColor.Blue, $"{Label}: ");
         Console.Write(value);
     }
 
     bool HandleChar() {
         var c = Console.ReadKey(true);
-        switch (c.KeyChar) {
-            case '\r':
-                return false;
-            case '\x7F':
+        switch (c.Key) {
+            case ConsoleKey.Backspace:
                 if (value.Length > 0) {
                     value.Length -= 1;
                 }
                 break;
+            case ConsoleKey.Enter:
+                return value.Length == 0;
+            case ConsoleKey.Escape:
+                Cancel();
+                throw new CancelException();
             default:
-                if (value.Length < Max) {
+                if (value.Length < Max && KeepChar(c.KeyChar)) {
                     value.Append(c.KeyChar);
                 }
                 break;
@@ -36,18 +50,50 @@ class Field {
     }
 
     public string Prompt() {
-        Draw();
-        while (HandleChar()) {
+        ConsoleCancelEventHandler cancel = delegate { Cancel(); };
+        Console.CancelKeyPress += cancel; 
+        try {
             Draw();
+            while (HandleChar()) {
+                Draw();
+            }
+            Console.WriteLine();
+            return value.ToString();
+        } finally {
+            Console.CancelKeyPress -= cancel;
         }
-        Console.WriteLine();
-        return value.ToString();
+    }
+
+    void Write(ConsoleColor color, string message) {
+        Console.ForegroundColor = ConsoleColor.Red;
+        try {
+            Console.WriteLine("-");
+        } finally {
+            Console.ResetColor();
+        }
+    }
+}
+
+class ConstrainedField: Field {
+    public string Approved { init; get; }
+
+    protected override bool KeepChar(char c) {
+        return Approved.Contains(c);
     }
 }
 
 class Program {
     static void Main(string[] args) {
-        var nameField = new Field { Label = "Name", Max = 5 };
-        nameField.Prompt();
+        while (true) {
+            try {
+                var name = new Field { Label = "Name", Max = 5 }.Prompt();
+                var age = Int32.Parse(new ConstrainedField {
+                    Label = "Age", Approved = "0123456789", Max = 3,
+                }.Prompt());
+                Console.WriteLine($"{name} is {age} years old");
+            } catch (CancelException) {
+                // Just keep going.
+            }
+        }
     }
 }
