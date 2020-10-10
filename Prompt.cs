@@ -19,6 +19,7 @@ class Field {
         value.Clear();
         Draw();
         Write(ConsoleColor.Red, "-");
+        Console.WriteLine();
     }
 
     void Draw() {
@@ -50,8 +51,8 @@ class Field {
     }
 
     public string Prompt() {
-        ConsoleCancelEventHandler cancel = delegate { Cancel(); };
-        Console.CancelKeyPress += cancel; 
+        ConsoleCancelEventHandler cancelHandler = delegate { Cancel(); };
+        Console.CancelKeyPress += cancelHandler; 
         try {
             Draw();
             while (HandleChar()) {
@@ -60,14 +61,14 @@ class Field {
             Console.WriteLine();
             return value.ToString();
         } finally {
-            Console.CancelKeyPress -= cancel;
+            Console.CancelKeyPress -= cancelHandler;
         }
     }
 
     void Write(ConsoleColor color, string message) {
-        Console.ForegroundColor = ConsoleColor.Red;
+        Console.ForegroundColor = color;
         try {
-            Console.WriteLine("-");
+            Console.Write(message);
         } finally {
             Console.ResetColor();
         }
