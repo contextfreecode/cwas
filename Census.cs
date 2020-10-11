@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Text;
-using System.Threading;
 
 class CancelException: Exception {}
 
@@ -83,7 +82,7 @@ class ConstrainedField: Field {
     }
 }
 
-class Program {
+class Census {
     static void Main(string[] args) {
         while (true) {
             try {
