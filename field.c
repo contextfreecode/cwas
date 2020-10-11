@@ -76,7 +76,7 @@ void init(int argc, char** argv) {
     // signal(SIGABRT, catch_signal);
     assert(argc > 2);
     label = argv[1];
-    max_size = atoi(argv[2]);
+    max_size = atoll(argv[2]);
     assert(!tcgetattr(STDIN_FILENO, &old_termios));
     assert((value = malloc(max_size + 1)));
     struct termios new_termios = old_termios;
