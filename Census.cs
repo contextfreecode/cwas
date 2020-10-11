@@ -10,10 +10,6 @@ class Field {
 
     StringBuilder value = new();
 
-    protected virtual bool KeepChar(char c) {
-        return true;
-    }
-
     void Cancel() {
         value.Clear();
         Draw();
@@ -46,6 +42,10 @@ class Field {
                 }
                 break;
         }
+        return true;
+    }
+
+    protected virtual bool KeepChar(char c) {
         return true;
     }
 

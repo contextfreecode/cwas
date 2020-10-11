@@ -23,6 +23,8 @@ struct termios old_termios;
 size_t size = 0;
 char* value = "";
 
+bool keep_char(int c);
+
 void draw(void) {
     fprintf(stderr, ERASE_LINE "\r");
     fprintf(stderr, COLOR_LABEL "%s:" COLOR_RESET " %s", label, value);
@@ -62,7 +64,7 @@ void handle_char(void) {
             cancel();
             exit(EXIT_CANCEL);
         default:
-            if (size < max_size) {
+            if (size < max_size && keep_char(c)) {
                 value[size++] = c;  // Wild and crazy post increment.
                 value[size] = 0;
             }
@@ -70,7 +72,11 @@ void handle_char(void) {
     }
 }
 
-void init(void) {
+void init(int argc, char** argv) {
+    // signal(SIGABRT, catch_signal);
+    assert(argc > 2);
+    label = argv[1];
+    max_size = atoi(argv[2]);
     assert(!tcgetattr(STDIN_FILENO, &old_termios));
     assert((value = malloc(max_size + 1)));
     struct termios new_termios = old_termios;
@@ -86,13 +92,4 @@ void prompt() {
         handle_char();
         draw();
     }
-}
-
-int main(int argc, char** argv) {
-    // signal(SIGABRT, catch_signal);
-    assert(argc > 2);
-    label = argv[1];
-    max_size = atoi(argv[2]);
-    init();
-    prompt();
 }
