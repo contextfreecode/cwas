@@ -1,3 +1,7 @@
+set -e
+cc -o field field_main.c
+cc -o constrained_field constrained_field_main.c
+
 cancel=2
 
 trap '' INT
