@@ -53,10 +53,9 @@ class Field {
         ConsoleCancelEventHandler cancelHandler = delegate { Cancel(); };
         Console.CancelKeyPress += cancelHandler; 
         try {
-            Draw();
-            while (HandleChar()) {
+            do {
                 Draw();
-            }
+            } while (HandleChar());
             Console.WriteLine();
             return value.ToString();
         } finally {

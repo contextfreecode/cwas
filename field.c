@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -76,6 +77,7 @@ void init(int argc, char** argv) {
     label = argv[1];
     max_size = atoll(argv[2]);
     assert((value = malloc(max_size + 1)));
+    memset(value, 0, max_size);
     // Prepare terminal.
     assert(!tcgetattr(STDIN_FILENO, &old_termios));
     struct termios new_termios = old_termios;
@@ -87,9 +89,8 @@ void init(int argc, char** argv) {
 }
 
 void prompt() {
-    draw();
     while (true) {
-        handle_char();
         draw();
+        handle_char();
     }
 }
