@@ -6,8 +6,6 @@
 #include <termios.h>
 #include <unistd.h>
 
-// C was already sharp
-
 #define CHAR_BACKSPACE '\x7f'
 #define CHAR_ENTER '\n'
 #define CHAR_ESCAPE '\x1b'
@@ -77,11 +75,13 @@ void init(int argc, char** argv) {
     assert(argc > 2);
     label = argv[1];
     max_size = atoll(argv[2]);
-    assert(!tcgetattr(STDIN_FILENO, &old_termios));
     assert((value = malloc(max_size + 1)));
+    // Prepare terminal.
+    assert(!tcgetattr(STDIN_FILENO, &old_termios));
     struct termios new_termios = old_termios;
     new_termios.c_lflag &= ~(ECHO | ICANON);
     assert(!tcsetattr(STDIN_FILENO, TCSANOW, &new_termios));
+    // Handle cleanup.
     assert(!atexit(finally));
     signal(SIGINT, catch_signal);
 }
