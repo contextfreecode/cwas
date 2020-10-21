@@ -22,12 +22,9 @@ struct termios old_termios;
 size_t size = 0;
 char* value = "";
 
+void draw(void);
+void finally(void);
 bool keep_char(int c);
-
-void draw(void) {
-    fprintf(stderr, ERASE_LINE "\r");
-    fprintf(stderr, COLOR_LABEL "%s:" COLOR_RESET " %s", label, value);
-}
 
 void cancel(void) {
     value[size = 0] = 0;  // Wild and crazy assignment expression.
@@ -35,9 +32,20 @@ void cancel(void) {
     fprintf(stderr, COLOR_CANCEL "-" COLOR_RESET);
 }
 
+void catch_abort(int signum) {
+    finally();
+    signal(SIGABRT, SIG_DFL);
+    raise(SIGABRT);
+}
+
 void catch_signal(int signum) {
     cancel();
     exit(EXIT_FAILURE);
+}
+
+void draw(void) {
+    fprintf(stderr, ERASE_LINE "\r");
+    fprintf(stderr, COLOR_LABEL "%s:" COLOR_RESET " %s", label, value);
 }
 
 void finally(void) {
@@ -72,7 +80,6 @@ void handle_char(void) {
 }
 
 void init(int argc, char** argv) {
-    // signal(SIGABRT, catch_signal);
     assert(argc > 2);
     label = argv[1];
     max_size = atoll(argv[2]);
@@ -80,9 +87,11 @@ void init(int argc, char** argv) {
     memset(value, 0, max_size);
     // Prepare terminal.
     assert(!tcgetattr(STDIN_FILENO, &old_termios));
+    signal(SIGABRT, catch_abort);
     struct termios new_termios = old_termios;
     new_termios.c_lflag &= ~(ECHO | ICANON);
     assert(!tcsetattr(STDIN_FILENO, TCSANOW, &new_termios));
+    // assert(false);
     // Handle cleanup.
     assert(!atexit(finally));
     signal(SIGINT, catch_signal);

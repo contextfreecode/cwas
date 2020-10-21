@@ -85,10 +85,12 @@ class Census {
     static void Main(string[] args) {
         while (true) {
             try {
-                var name = new Field { Label = "Name", Max = 5 }.Prompt();
-                var age = Int32.Parse(new ConstrainedField {
-                    Label = "Age", Approved = "0123456789", Max = 3,
-                }.Prompt());
+                var name = new Field {
+                    Label = "Name", Max = 5,
+                }.Prompt();
+                var age = new ConstrainedField {
+                    Label = "Age", Max = 3, Approved = "0123456789",
+                }.Prompt();
                 Console.WriteLine($"{name} is {age} years old");
             } catch (CancelException) {
                 // Just keep going.
