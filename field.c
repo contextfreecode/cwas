@@ -16,6 +16,13 @@
 #define ERASE_LINE "\x1b[2K"
 #define EXIT_CANCEL 2
 
+// Ensure we don't lose our 
+#ifdef NDEBUG
+#   define check(x) (x)
+#else
+#   define check(x) assert(x)
+#endif
+
 size_t max_size;
 const char* label = "";
 struct termios old_termios;
@@ -27,7 +34,7 @@ void finally(void);
 bool keep_char(int c);
 
 void cancel(void) {
-    value[size = 0] = 0;  // Wild and crazy assignment expression.
+    value[(size = 0)] = 0;  // Wild and crazy assignment expression.
     draw();
     fprintf(stderr, COLOR_CANCEL "-" COLOR_RESET);
 }
@@ -83,17 +90,17 @@ void init(int argc, char** argv) {
     assert(argc > 2);
     label = argv[1];
     max_size = atoll(argv[2]);
-    assert((value = malloc(max_size + 1)));
+    check((value = malloc(max_size + 1)));
     memset(value, 0, max_size);
     // Prepare terminal.
-    assert(!tcgetattr(STDIN_FILENO, &old_termios));
+    check(!tcgetattr(STDIN_FILENO, &old_termios));
     signal(SIGABRT, catch_abort);
     struct termios new_termios = old_termios;
     new_termios.c_lflag &= ~(ECHO | ICANON);
-    assert(!tcsetattr(STDIN_FILENO, TCSANOW, &new_termios));
+    check(!tcsetattr(STDIN_FILENO, TCSANOW, &new_termios));
     // assert(false);
     // Handle cleanup.
-    assert(!atexit(finally));
+    check(!atexit(finally));
     signal(SIGINT, catch_signal);
 }
 
